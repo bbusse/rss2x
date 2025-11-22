@@ -12,3 +12,17 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 html2text = "0.6"
+
+[profile.release]
+# Enable link-time optimization (whole-program optimization)
+lto = true
+# Strip debug symbols to reduce size
+strip = "debuginfo"
+# Optimize for size instead of speed
+opt-level = "z"
+# Reduce codegen units to improve optimization
+codegen-units = 1
+# Panic strategy: abort instead of unwinding (smaller binary)
+panic = "abort"
+# Ensures cleaner builds without leftover artifacts
+incremental = false
