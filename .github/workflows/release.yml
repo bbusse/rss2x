@@ -1,0 +1,52 @@
+name: Build and Release Rust Binaries
+
+on:
+  push:
+    branches: [dev]
+    tags:
+      - 'rc-*'
+      - 'release-*'
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+
+jobs:
+  build-macos-arm64:
+    uses: bbusse/github-workflows/.github/workflows/build-rust.yml@dev
+    with:
+      binary_name: rss2x
+      artifact_name: rss2x
+      musl: true
+
+  build-freebsd:
+    uses: bbusse/github-workflows/.github/workflows/build-rust-pkg-freebsd.yml@dev
+    with:
+      binary_name: rss2x
+      artifact_name: rss2x
+
+  release:
+    needs:
+      - build-macos-arm64
+      - build-freebsd
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    uses: bbusse/github-workflows/.github/workflows/release.yml@dev
+    with:
+      artifact_name: rss2x
+      binary_name: rss2x
+      release_branch: dev
+    secrets: inherit
+
+  build-apk:
+    needs:
+      - build-macos-arm64
+      - release
+    if: startsWith(github.ref, 'refs/tags/')
+    uses: bbusse/github-workflows/.github/workflows/build-apk.yml@dev
+    with:
+      artifact_name: rss2x
+      binary_name: rss2x
+      version: ${{ needs.release.outputs.version }}
+      pkgurl: https://github.com/bbusse/rss2x
+    secrets: inherit
